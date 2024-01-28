@@ -1,9 +1,9 @@
 import { Link, useMatch } from "react-router-dom"
 import styled from "styled-components"
-import { motion, useAnimation } from "framer-motion"
-import { useState } from "react"
+import { motion, useAnimation, useViewportScroll } from "framer-motion"
+import { useEffect, useState } from "react"
 
-const Nav = styled.nav`
+const Nav = styled(motion.nav)`
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -98,11 +98,22 @@ const logoVariants = {
   },
 }
 
+const navVariants = {
+  top: {
+    backgroundColor: "rgba(0, 0, 0, 0)",
+  },
+  scroll: {
+    backgroundColor: "rgba(0, 0, 0, 1)",
+  },
+}
+
 function Header() {
   const [searchOpen, setSearchOpen] = useState(false)
   const homeMatch = useMatch("/")
   const tvMatch = useMatch("/tv")
   const inputAnimation = useAnimation()
+  const navAnimation = useAnimation()
+  const { scrollY } = useViewportScroll()
 
   const toggleSearch = () => {
     if (searchOpen) {
@@ -115,13 +126,23 @@ function Header() {
     setSearchOpen((prev) => !prev)
   }
 
+  useEffect(() => {
+    scrollY.onChange(() => {
+      if (scrollY.get() > 80) {
+        navAnimation.start("scroll")
+      } else {
+        navAnimation.start("top")
+      }
+    })
+  }, [scrollY, navAnimation])
+
   return (
-    <Nav>
+    <Nav variants={navVariants} animate={navAnimation} initial={"top"}>
       <Col>
         <Logo
           variants={logoVariants}
           whileHover="active"
-          initial="normal"
+          animate="normal"
           xmlns="http://www.w3.org/2000/svg"
           width="1024"
           height="276.742"
@@ -142,7 +163,7 @@ function Header() {
         <Search>
           <motion.svg
             onClick={toggleSearch}
-            animate={{ x: searchOpen ? -180 : 0 }}
+            animate={{ x: searchOpen ? -185 : 0 }}
             transition={{ type: "linear" }}
             fill="currentColor"
             viewBox="0 0 20 20"
@@ -155,8 +176,9 @@ function Header() {
             ></path>
           </motion.svg>
           <Input
+            animate={inputAnimation}
+            initial={{ scaleX: 0 }}
             transition={{ type: "linear" }}
-            animate={{ scaleX: searchOpen ? 1 : 0 }}
             placeholder="Search for movie or tv show..."
           />
         </Search>
